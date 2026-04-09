@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Smart Energy Analyzer</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --bg: #0d0f14;
+  --surface: #13161e;
+  --surface2: #1a1e29;
+  --surface3: #232837;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text: #e8eaf0;
+  --text2: #8b90a0;
+  --text3: #555a6e;
+  --accent: #4f8aff;
+  --accent2: #2563eb;
+  --green: #22c55e;
+  --green2: #16a34a;
+  --amber: #f59e0b;
+  --red: #ef4444;
+  --purple: #a855f7;
+  --sidebar-w: 220px;
+  --radius: 12px;
+  --radius-sm: 8px;
+}
+
+/* LIGHT MODE */
+body.light-mode {
+  --bg: #f8fafb;
+  --surface: #ffffff;
+  --surface2: #f3f5f8;
+  --surface3: #e8ecf0;
+  --border: rgba(0,0,0,0.08);
+  --border2: rgba(0,0,0,0.12);
+  --text: #1a1a1a;
+  --text2: #666666;
+  --text3: #999999;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;overflow-x:hidden}
+
+/* SIDEBAR */
+.sidebar{
+  width:var(--sidebar-w);min-width:var(--sidebar-w);
+  background:var(--surface);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  height:100vh;position:sticky;top:0;
+  padding:0;
+}
+.sidebar-logo{
+  padding:24px 20px 20px;
+  border-bottom:1px solid var(--border);
+}
+.sidebar-logo .logo-icon{
+  width:36px;height:36px;background:var(--accent2);
+  border-radius:10px;display:flex;align-items:center;justify-content:center;
+  font-size:18px;margin-bottom:10px;
+}
+.sidebar-logo h1{font-size:14px;font-weight:600;color:var(--text);line-height:1.3}
+.sidebar-logo p{font-size:11px;color:var(--text3);margin-top:2px;font-family:'JetBrains Mono',monospace}
+.sidebar-nav{padding:12px 10px;flex:1;display:flex;flex-direction:column;gap:2px}
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;border-radius:var(--radius-sm);
+  cursor:pointer;font-size:13px;color:var(--text2);
+  transition:all 0.2s;border:none;background:none;
+  width:100%;text-align:left;font-family:'Space Grotesk',sans-serif;
+}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:rgba(79,138,255,0.12);color:var(--accent);font-weight:500}
+.nav-item .nav-icon{font-size:16px;width:20px;text-align:center;flex-shrink:0}
+.sidebar-section-label{
+  font-size:10px;color:var(--text3);letter-spacing:1px;
+  text-transform:uppercase;padding:12px 12px 6px;font-weight:500;
+}
+.sidebar-status{
+  padding:14px;border-top:1px solid var(--border);
+  display:flex;flex-direction:column;gap:6px;
+}
+.status-dot{
+  display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2);
+}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dot-green{background:var(--green);box-shadow:0 0 6px var(--green)}
+.dot-blue{background:var(--accent);box-shadow:0 0 6px var(--accent)}
+.dot-amber{background:var(--amber);box-shadow:0 0 6px var(--amber)}
+
+/* MAIN */
+.main{flex:1;min-height:100vh;overflow:auto}
+.page{display:none;padding:28px 28px 60px;animation:fadeIn 0.3s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes topDeviceGlow{0%,100%{box-shadow:inset 0 0 0 1px rgba(79,138,255,0.2)}50%{box-shadow:inset 0 0 8px 1px rgba(79,138,255,0.4)}}
+
+/* PAGE HEADER */
+.page-header{margin-bottom:24px}
+.page-header .breadcrumb{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:6px}
+.page-header h2{font-size:22px;font-weight:600;color:var(--text)}
+.page-header p{font-size:13px;color:var(--text2);margin-top:4px}
+
+/* GRID */
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px}
+.grid5{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px}
+
+/* CARDS */
+.card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:18px;
+}
+.card:hover{border-color:var(--border2)}
+.card-span2{grid-column:span 2}
+
+/* METRIC CARD */
+.metric-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px;font-weight:500}
+.metric-value{font-size:26px;font-weight:600;font-family:'JetBrains Mono',monospace}
+.metric-sub{font-size:12px;color:var(--text2);margin-top:6px}
+
+/* PROGRESS */
+.progress-bar{height:4px;background:var(--surface3);border-radius:2px;overflow:hidden;margin-top:8px}
+.progress-fill{height:100%;border-radius:2px;transition:width 0.8s ease}
+.pf-blue{background:var(--accent)}
+.pf-green{background:var(--green)}
+.pf-amber{background:var(--amber)}
+
+/* BADGE */
+.badge{display:inline-block;font-size:10px;padding:3px 8px;border-radius:5px;font-weight:500;letter-spacing:0.3px}
+.badge-green{background:rgba(34,197,94,0.15);color:var(--green)}
+.badge-blue{background:rgba(79,138,255,0.15);color:var(--accent)}
+.badge-amber{background:rgba(245,158,11,0.15);color:var(--amber)}
+.badge-red{background:rgba(239,68,68,0.15);color:var(--red)}
+
+/* ALERT */
+.alert{
+  padding:12px 16px;border-radius:var(--radius-sm);
+  font-size:13px;line-height:1.6;margin-bottom:18px;
+  background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);color:var(--green);
+}
+
+/* BAR CHART */
+.bar-chart-wrap{display:flex;align-items:flex-end;gap:5px;height:140px;margin:14px 0 4px}
+.bar-group{flex:1;display:flex;align-items:flex-end;gap:2px;height:100%}
+.bar{width:100%;border-radius:3px 3px 0 0;min-height:3px;transition:height 0.6s ease;position:relative;cursor:pointer}
+.bar-actual{background:var(--accent)}
+.bar-forecast{background:rgba(79,138,255,0.25)}
+.bar:hover .btt{display:block}
+.btt{display:none;position:absolute;top:-26px;left:50%;transform:translateX(-50%);
+  background:var(--surface3);color:var(--text);font-size:10px;padding:3px 6px;
+  border-radius:4px;white-space:nowrap;font-family:'JetBrains Mono',monospace;z-index:10;border:1px solid var(--border2)}
+.chart-time-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace}
+
+/* RING */
+.ring-center{font-size:22px;font-weight:600;font-family:'JetBrains Mono',monospace}
+
+/* STAT ROW */
+.stat-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:9px 0;border-bottom:1px solid var(--border)}
+.stat-row:last-child{border-bottom:none}
+.stat-label{color:var(--text2)}
+.stat-val{font-weight:500;font-family:'JetBrains Mono',monospace}
+
+/* FORECAST */
+.forecast-card{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--radius);padding:14px;text-align:center;
+  transition:transform 0.2s,border-color 0.2s;
+}
+.forecast-card:hover{transform:translateY(-3px);border-color:var(--border2)}
+.forecast-day{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px}
+.forecast-icon{font-size:24px;margin:6px 0}
+.forecast-kwh{font-size:17px;font-weight:600;font-family:'JetBrains Mono',monospace}
+.forecast-lbl{font-size:10px;color:var(--text3);margin-top:2px}
+
+/* FORM */
+.form-group{margin-bottom:14px}
+.form-label{font-size:12px;color:var(--text2);margin-bottom:6px;display:block;font-weight:500}
+.form-input{
+  width:100%;padding:9px 12px;
+  background:var(--surface2);border:1px solid var(--border2);
+  border-radius:var(--radius-sm);color:var(--text);
+  font-size:13px;font-family:'Space Grotesk',sans-serif;
+  transition:border-color 0.2s;
+}
+.form-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,138,255,0.12)}
+.form-input option{background:var(--surface2)}
+.form-row{display:flex;gap:10px}
+.form-row .form-group{flex:1;margin-bottom:0}
+.btn-primary{
+  width:100%;padding:10px;background:var(--accent2);
+  color:#fff;border:none;border-radius:var(--radius-sm);
+  font-size:13px;font-family:'Space Grotesk',sans-serif;font-weight:600;
+  cursor:pointer;transition:background 0.2s;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.btn-primary:hover{background:var(--accent)}
+
+/* DEVICE LIST */
+.device-item{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:11px 14px;background:var(--surface2);border-radius:var(--radius-sm);
+  border:1px solid var(--border);margin-bottom:8px;
+}
+.device-name{font-size:13px;font-weight:500}
+.device-meta{font-size:11px;color:var(--text3);margin-top:2px;font-family:'JetBrains Mono',monospace}
+.device-kwh{font-size:13px;font-weight:500;color:var(--accent);font-family:'JetBrains Mono',monospace}
+.btn-del{background:none;border:none;cursor:pointer;color:var(--text3);font-size:15px;padding:2px 5px;transition:color 0.2s}
+.btn-del:hover{color:var(--red)}
+
+/* REPORT */
+.savings-big{font-size:28px;font-weight:600;color:var(--green);font-family:'JetBrains Mono',monospace}
+.bill-big{font-size:28px;font-weight:600;color:var(--red);font-family:'JetBrains Mono',monospace}
+.report-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;font-weight:500;margin-bottom:10px}
+.insight-item{padding:10px 14px;background:var(--surface2);border-radius:var(--radius-sm);border-left:3px solid var(--accent);font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:8px}
+
+/* PIE LEGEND */
+.pie-legend{display:flex;flex-direction:column;flex-wrap:wrap;gap:6px;margin-top:12px}
+.pie-leg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2);padding:4px 0;transition:all 0.2s}
+.pie-swatch{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+
+/* TAB BAR */
+.tab-bar{display:flex;gap:3px;background:var(--surface2);padding:4px;border-radius:var(--radius-sm);width:fit-content;margin-bottom:18px}
+.tab-btn{padding:6px 14px;border:none;background:transparent;border-radius:6px;font-size:12px;cursor:pointer;color:var(--text2);font-family:'Space Grotesk',sans-serif;font-weight:500;transition:all 0.2s}
+.tab-btn.active{background:var(--surface3);color:var(--text)}
+
+/* TOP DEVICE CHIP */
+.top-chip{display:inline-flex;align-items:center;gap:6px;background:rgba(79,138,255,0.12);color:var(--accent);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:500;border:1px solid rgba(79,138,255,0.2)}
+
+/* MSG */
+.sys-msg{font-size:12px;color:var(--green);margin-top:8px;font-family:'JetBrains Mono',monospace}
+
+/* LIVE CLOCK */
+.live-clock{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;padding:10px 14px 6px;border-top:1px solid var(--border);text-align:center}
+
+/* CHART WRAPPERS */
+.chart-wrap{position:relative}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .grid4{grid-template-columns:1fr 1fr}
+  .grid3{grid-template-columns:1fr 1fr}
+  .grid5{grid-template-columns:1fr 1fr}
+  .sidebar{width:180px;min-width:180px}
+}
+@media(max-width:640px){
+  .sidebar{display:none}
+  .page{padding:16px}
+  .grid4,.grid2,.grid3,.grid5{grid-template-columns:1fr}
+  .card-span2{grid-column:span 1}
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">⚡</div>
+    <h1>Smart Energy<br>Analyzer</h1>
+    <p>v2.0 · Solar+Storage</p>
+  </div>
+
+  <nav class="sidebar-nav">
+    <span class="sidebar-section-label">Main</span>
+    <button class="nav-item active" onclick="showPage('dashboard',this)">
+      <span class="nav-icon">📊</span> Dashboard
+    </button>
+    <button class="nav-item" onclick="showPage('analytics',this)">
+      <span class="nav-icon">📈</span> Analytics
+    </button>
+    <button class="nav-item" onclick="showPage('devices',this)">
+      <span class="nav-icon">🔌</span> Devices
+    </button>
+    <button class="nav-item" onclick="showPage('report',this)">
+      <span class="nav-icon">📋</span> Report
+    </button>
+    <span class="sidebar-section-label" style="margin-top:8px">System</span>
+    <button class="nav-item" onclick="showPage('solar',this)">
+      <span class="nav-icon">☀️</span> Solar Gen
+    </button>
+    <button class="nav-item" onclick="showPage('settings',this)">
+      <span class="nav-icon">⚙️</span> Settings
+    </button>
+  </nav>
+
+  <div class="sidebar-status">
+    <div class="status-dot"><div class="dot dot-green"></div> Solar: Online</div>
+    <div class="status-dot"><div class="dot dot-blue"></div> Battery: <span id="sb-batt" style="font-family:'JetBrains Mono',monospace">75%</span></div>
+    <div class="status-dot"><div class="dot dot-amber"></div> Grid: Standby</div>
+    <button id="theme-toggle" class="nav-item" style="margin-top:12px;justify-content:center" onclick="toggleTheme()">
+      <span id="theme-icon">🌙</span> Dark
+    </button>
+  </div>
+  <div class="live-clock" id="live-clock">--:--:--</div>
+</aside>
+
+<!-- MAIN CONTENT -->
+<main class="main">
+
+  <!-- DASHBOARD -->
+  <div class="page active" id="page-dashboard">
+    <div class="page-header">
+      <div class="breadcrumb">/ dashboard</div>
+      <h2>Solar &amp; Storage Analysis</h2>
+      <p>Real-time performance overview</p>
+    </div>
+
+    <div class="alert" id="dash-alert">
+      ✓ System running optimally. On track for 175 kWh weekly target. High sunshine forecast tomorrow will push you over.
+    </div>
+
+    <div class="grid4">
+      <div class="card">
+        <div class="metric-label">Weekly Generation</div>
+        <div class="metric-value" id="d-weekly">142.8 kWh</div>
+        <div class="progress-bar"><div class="progress-fill pf-blue" style="width:82%"></div></div>
+        <div class="metric-sub">82% of 175 kWh target</div>
+      </div>
+      <div class="card">
+        <div class="metric-label">Battery Level</div>
+        <div class="metric-value" style="color:var(--green)" id="d-batt">75%</div>
+        <div class="progress-bar"><div class="progress-fill pf-green" id="batt-bar" style="width:75%"></div></div>
+        <div class="metric-sub" id="d-batt-time">~14h 22m remaining</div>
+      </div>
+      <div class="card">
+        <div class="metric-label">Monthly Savings</div>
+        <div class="metric-value" style="color:var(--green)" id="d-savings">₹2,065</div>
+        <div class="metric-sub">Lifetime: ₹1,03,750</div>
+      </div>
+      <div class="card">
+        <div class="metric-label">Grid Independence</div>
+        <div class="metric-value">92%</div>
+        <div class="progress-bar"><div class="progress-fill pf-blue" style="width:92%"></div></div>
+        <div class="metric-sub">+12% vs regional avg</div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card card-span2">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <div>
+            <div style="font-size:14px;font-weight:600">Hourly Solar Yield</div>
+            <div style="font-size:12px;color:var(--text2)">Today's performance across active panels</div>
+          </div>
+          <div style="display:flex;gap:14px;font-size:11px;color:var(--text2)">
+            <span style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:2px;background:var(--accent);display:inline-block"></span>Actual (kW)</span>
+            <span style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:2px;background:rgba(79,138,255,0.3);display:inline-block"></span>Forecast (kW)</span>
+          </div>
+        </div>
+        <div class="bar-chart-wrap" id="solar-bars"></div>
+        <div class="chart-time-labels">
+          <span>06:00</span><span>08:00</span><span>10:00</span><span>12:00</span><span>14:00</span><span>16:00</span><span>18:00</span><span>20:00</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid5" id="forecast-grid"></div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="metric-label" style="margin-bottom:14px">Battery Status</div>
+        <div style="display:flex;justify-content:center;margin:8px 0 14px">
+          <svg width="130" height="130" viewBox="0 0 130 130" role="img" aria-label="Battery ring showing charge level">
+            <circle cx="65" cy="65" r="54" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="9"/>
+            <circle id="batt-ring" cx="65" cy="65" r="54" fill="none" stroke="var(--green)" stroke-width="9"
+              stroke-linecap="round" stroke-dasharray="339" stroke-dashoffset="85"
+              transform="rotate(-90 65 65)" style="transition:stroke-dashoffset 1s ease"/>
+            <text x="65" y="61" text-anchor="middle" font-size="20" font-weight="600" fill="#e8eaf0" font-family="'JetBrains Mono'" id="batt-pct-text">75%</text>
+            <text x="65" y="77" text-anchor="middle" font-size="9" fill="#555a6e" font-family="'Space Grotesk'" letter-spacing="1">CHARGED</text>
+          </svg>
+        </div>
+        <div class="stat-row"><span class="stat-label">Health</span><span class="stat-val">98.4%</span></div>
+        <div class="stat-row"><span class="stat-label">Time Remaining</span><span class="stat-val" id="batt-time-stat">14h 22m</span></div>
+        <div class="stat-row"><span class="stat-label">Mode</span><span><span class="badge badge-green">Active Discharge</span></span></div>
+      </div>
+      <div class="card">
+        <div class="metric-label" style="margin-bottom:14px">ROI &amp; Savings (INR)</div>
+        <div style="margin-bottom:16px">
+          <div style="font-size:12px;color:var(--text2);margin-bottom:4px">This month offset</div>
+          <div style="font-size:26px;font-weight:600;color:var(--green);font-family:'JetBrains Mono',monospace">+₹2,065</div>
+        </div>
+        <div style="margin-bottom:16px">
+          <div style="font-size:12px;color:var(--text2);margin-bottom:4px">Lifetime savings</div>
+          <div style="font-size:26px;font-weight:600;font-family:'JetBrains Mono',monospace">₹1,03,750</div>
+        </div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:8px">Grid independence trend (7 days)</div>
+        <div style="height:36px;display:flex;align-items:flex-end;gap:3px" id="grid-mini-bars"></div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="metric-label" style="margin-bottom:14px">☀️ Weekly Solar Generation</div>
+        <div style="margin-bottom:20px">
+          <div style="font-size:12px;color:var(--text2);margin-bottom:4px">This week produced</div>
+          <div style="font-size:28px;font-weight:600;color:var(--accent);font-family:'JetBrains Mono',monospace" id="d-solar-weekly">0 kWh</div>
+        </div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:8px">Peak performance</div>
+        <div style="display:flex;gap:8px">
+          <div style="flex:1;text-align:center;padding:8px;background:rgba(79,138,255,0.05);border-radius:8px">
+            <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Daily Avg</div>
+            <div style="font-size:16px;font-weight:600;color:var(--accent)" id="d-solar-daily">0 kWh</div>
+          </div>
+          <div style="flex:1;text-align:center;padding:8px;background:rgba(34,197,94,0.05);border-radius:8px">
+            <div style="font-size:11px;color:var(--text2);margin-bottom:4px">Capacity</div>
+            <div style="font-size:16px;font-weight:600;color:var(--green)" id="d-solar-capacity">0 kW</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="metric-label" style="margin-bottom:14px">⚡ Energy Usage Source (Weekly)</div>
+        <div style="margin-bottom:16px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+            <span style="font-size:12px;color:var(--text2)">Solar Used</span>
+            <span style="font-size:12px;font-weight:600;color:var(--accent)" id="d-solar-pct">0%</span>
+          </div>
+          <div style="height:24px;background:rgba(255,255,255,0.04);border-radius:6px;overflow:hidden;display:flex">
+            <div id="d-solar-bar" style="height:100%;background:linear-gradient(90deg,#2563eb,#4f8aff);width:0%;transition:width 0.4s ease"></div>
+            <div id="d-grid-bar" style="height:100%;background:linear-gradient(90deg,#ef4444,#f87171);width:100%;transition:width 0.4s ease"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:8px">
+            <span style="font-size:11px;color:var(--text3)">Grid Used</span>
+            <span style="font-size:11px;font-weight:600;color:var(--red)" id="d-grid-pct">100%</span>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:12px">
+          <div style="padding:8px;background:rgba(79,138,255,0.05);border-radius:8px;border-left:3px solid var(--accent)">
+            <div style="color:var(--text2);margin-bottom:4px">From Solar</div>
+            <div style="font-size:16px;font-weight:600;color:var(--accent)" id="d-solar-kwh">0 kWh</div>
+          </div>
+          <div style="padding:8px;background:rgba(239,68,68,0.05);border-radius:8px;border-left:3px solid var(--red)">
+            <div style="color:var(--text2);margin-bottom:4px">From Grid</div>
+            <div style="font-size:16px;font-weight:600;color:var(--red)" id="d-grid-kwh">0 kWh</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANALYTICS -->
+  <div class="page" id="page-analytics">
+    <div class="page-header">
+      <div class="breadcrumb">/ analytics</div>
+      <h2>Analytics</h2>
+      <p>Energy generation, consumption &amp; efficiency trends</p>
+    </div>
+
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchAnalyticsTab('weekly',this)">Weekly</button>
+      <button class="tab-btn" onclick="switchAnalyticsTab('monthly',this)">Monthly</button>
+    </div>
+
+    <div class="grid2" style="margin-bottom:14px">
+      <div class="card">
+        <div style="font-size:14px;font-weight:600;margin-bottom:14px">Generated vs Consumed</div>
+        <div class="chart-wrap" style="height:200px"><canvas id="analChart1" role="img" aria-label="Bar chart comparing solar generation vs consumption">Weekly generation vs consumption data</canvas></div>
+        <div style="display:flex;gap:14px;margin-top:10px;font-size:11px;color:var(--text2)">
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:2px;background:var(--accent);display:inline-block"></span>Generated (kWh)</span>
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:2px;background:var(--red);display:inline-block"></span>Consumed (kWh)</span>
+        </div>
+      </div>
+      <div class="card">
+        <div style="font-size:14px;font-weight:600;margin-bottom:14px">Device Consumption</div>
+        <div class="chart-wrap" style="height:170px"><canvas id="analChart2" role="img" aria-label="Doughnut chart of device energy consumption breakdown">Device breakdown</canvas></div>
+        <div class="pie-legend" id="pie-legend"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="font-size:14px;font-weight:600;margin-bottom:14px">Monthly Savings Trend (₹)</div>
+      <div class="chart-wrap" style="height:170px"><canvas id="analChart3" role="img" aria-label="Line chart showing monthly savings in INR over 6 months">Monthly savings trend</canvas></div>
+    </div>
+  </div>
+
+  <!-- DEVICES -->
+  <div class="page" id="page-devices">
+    <div class="page-header">
+      <div class="breadcrumb">/ devices</div>
+      <h2>Device Manager</h2>
+      <p>Add appliances and calculate monthly energy cost</p>
+    </div>
+
+    <div class="grid2" style="margin-bottom:16px">
+      <div class="card">
+        <div style="font-size:14px;font-weight:600;margin-bottom:16px">Add New Device</div>
+        <div class="form-group">
+          <label class="form-label">Device Name</label>
+          <input class="form-input" id="dev-name" type="text" placeholder="e.g. Air Conditioner"/>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Power (Watts)</label>
+            <input class="form-input" id="dev-watt" type="number" placeholder="1500" min="1"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Hours / day</label>
+            <input class="form-input" id="dev-hours" type="number" placeholder="8" min="0.1" max="24" step="0.5"/>
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:12px">
+          <label class="form-label">Room</label>
+          <select class="form-input" id="dev-room">
+            <option>Living Room</option>
+            <option>Bedroom</option>
+            <option>Kitchen</option>
+            <option>Office</option>
+            <option>Garage</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <button class="btn-primary" onclick="addDevice()">＋ Add Device</button>
+      </div>
+
+      <div class="card">
+        <div style="font-size:14px;font-weight:600;margin-bottom:16px">Quick Summary</div>
+        <div class="stat-row"><span class="stat-label">Total Devices</span><span class="stat-val" id="dev-count">0</span></div>
+        <div class="stat-row"><span class="stat-label">Total Monthly kWh</span><span class="stat-val" id="dev-total-kwh">0 kWh</span></div>
+        <div class="stat-row"><span class="stat-label">Estimated Bill</span><span class="stat-val" id="dev-bill">₹0</span></div>
+        <div class="stat-row"><span class="stat-label">Solar Savings</span><span class="stat-val" style="color:var(--green)" id="dev-savings">₹0</span></div>
+        <div style="margin-top:14px" id="top-device-chip"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="font-size:14px;font-weight:600;margin-bottom:14px">Device List</div>
+      <div id="device-list">
+        <div style="font-size:13px;color:var(--text3);padding:24px;text-align:center">No devices yet — add your first above.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REPORT -->
+  <div class="page" id="page-report">
+    <div class="page-header">
+      <div class="breadcrumb">/ report</div>
+      <h2>Energy Report</h2>
+      <p>Monthly summary, bill &amp; AI-powered recommendations</p>
+    </div>
+
+    <div class="grid4" style="margin-bottom:16px">
+      <div class="card">
+        <div class="report-label">Total Consumption</div>
+        <div class="metric-value" id="rep-consumption">— kWh</div>
+        <div class="metric-sub" id="rep-consumption-note">Add devices to calculate</div>
+      </div>
+      <div class="card">
+        <div class="report-label">Solar Generation</div>
+        <div class="metric-value" style="color:var(--green)" id="rep-solar">— kWh</div>
+        <div class="metric-sub" id="rep-solar-note">Monthly estimate</div>
+      </div>
+      <div class="card">
+        <div class="report-label">Est. Monthly Bill</div>
+        <div class="bill-big" id="rep-bill">₹—</div>
+        <div class="metric-sub">Grid usage only</div>
+      </div>
+      <div class="card">
+        <div class="report-label">Solar Savings</div>
+        <div class="savings-big" id="rep-savings">₹—</div>
+        <div class="metric-sub">vs. full grid cost</div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="report-label">Top Consuming Device</div>
+        <div style="font-size:15px;font-weight:600;margin-top:4px" id="rep-top-device">—</div>
+      </div>
+      <div class="card">
+        <div class="report-label">Per-Device Breakdown</div>
+        <div id="rep-breakdown"><div style="font-size:13px;color:var(--text3)">Add devices to see breakdown.</div></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="report-label">AI Insights &amp; Recommendations</div>
+      <div id="rep-insights" style="margin-top:4px">
+        <div style="font-size:13px;color:var(--text3)">Add devices and configure your system to see personalized recommendations.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SOLAR GENERATION -->
+  <div class="page" id="page-solar">
+    <div class="page-header">
+      <div class="breadcrumb">/ solar generation</div>
+      <h2>Solar Generation Overview</h2>
+      <p>Real-time solar production and efficiency metrics</p>
+    </div>
+
+    <div class="grid4">
+      <div class="card">
+        <div class="metric-label">This Week Generated</div>
+        <div class="metric-value" style="color:var(--accent)" id="sol-weekly">0 kWh</div>
+        <div class="progress-bar"><div class="progress-fill pf-blue" style="width:85%"></div></div>
+        <div class="metric-sub">7-day total</div>
+      </div>
+      <div class="card">
+        <div class="metric-label">This Month Generated</div>
+        <div class="metric-value" style="color:var(--accent)" id="sol-monthly">0 kWh</div>
+        <div class="progress-bar"><div class="progress-fill pf-blue" style="width:78%"></div></div>
+        <div class="metric-sub">30-day total</div>
+      </div>
+      <div class="card">
+        <div class="metric-label">Solar Capacity</div>
+        <div class="metric-value" style="color:var(--green)" id="sol-capacity">0 kW</div>
+        <div class="metric-sub">Peak power output</div>
+      </div>
+      <div class="card">
+        <div class="metric-label">Peak Sun Hours</div>
+        <div class="metric-value">5h</div>
+        <div class="metric-sub">Daily average</div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="metric-label" style="margin-bottom:14px">Weekly Efficiency</div>
+        <div style="margin-bottom:20px">
+          <div style="font-size:12px;color:var(--text2);margin-bottom:4px">Generation vs Consumption</div>
+          <div style="display:flex;gap:8px;align-items:baseline">
+            <div style="font-size:24px;font-weight:600;color:var(--accent)" id="sol-efficiency">0%</div>
+            <div style="font-size:12px;color:var(--text2)">self-sufficient</div>
+          </div>
+        </div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:8px">Generation breakdown</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div style="padding:8px;background:rgba(79,138,255,0.05);border-radius:8px">
+            <div style="font-size:10px;color:var(--text2);margin-bottom:2px">Peak Hours</div>
+            <div style="font-size:14px;font-weight:600;color:var(--accent)" id="sol-peak-gen">0 kWh</div>
+          </div>
+          <div style="padding:8px;background:rgba(34,197,94,0.05);border-radius:8px">
+            <div style="font-size:10px;color:var(--text2);margin-bottom:2px">Off-Peak</div>
+            <div style="font-size:14px;font-weight:600;color:var(--green)" id="sol-offpeak-gen">0 kWh</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="metric-label" style="margin-bottom:14px">Usage Comparison</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <span style="font-size:12px;color:var(--text2)">Solar vs Consumption</span>
+        </div>
+        <div style="height:32px;background:rgba(255,255,255,0.04);border-radius:6px;overflow:hidden;display:flex;margin-bottom:12px">
+          <div id="sol-gen-bar" style="height:100%;background:linear-gradient(90deg,#4f8aff,#2563eb);width:50%;transition:width 0.4s ease"></div>
+          <div id="sol-cons-bar" style="height:100%;background:linear-gradient(90deg,#ef4444,#f87171);width:50%;transition:width 0.4s ease"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:12px">
+          <div style="padding:8px;background:rgba(79,138,255,0.05);border-radius:8px;border-left:3px solid var(--accent)">
+            <div style="color:var(--text2);margin-bottom:4px">Solar Gen</div>
+            <div style="font-size:14px;font-weight:600;color:var(--accent)" id="sol-gen-kwh">0 kWh</div>
+          </div>
+          <div style="padding:8px;background:rgba(239,68,68,0.05);border-radius:8px;border-left:3px solid var(--red)">
+            <div style="color:var(--text2);margin-bottom:4px">Consumption</div>
+            <div style="font-size:14px;font-weight:600;color:var(--red)" id="sol-cons-kwh">0 kWh</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="page" id="page-settings">
+    <div class="page-header">
+      <div class="breadcrumb">/ settings</div>
+      <h2>System Settings</h2>
+      <p>Configure solar capacity, battery, and tariff</p>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div style="font-size:14px;font-weight:600;margin-bottom:16px">Solar &amp; Battery</div>
+        <div class="form-group">
+          <label class="form-label">Solar Capacity (kW)</label>
+          <input class="form-input" id="sys-solar" type="number" value="5" min="1" max="50" step="0.5"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Current Battery Level (%)</label>
+          <input class="form-input" id="sys-battery" type="number" value="75" min="0" max="100"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Electricity Tariff (₹/kWh)</label>
+          <input class="form-input" id="sys-tariff" type="number" value="8" min="1" step="0.5"/>
+        </div>
+        <button class="btn-primary" onclick="updateSystem()">💾 Save Settings</button>
+        <div class="sys-msg" id="sys-update-msg"></div>
+      </div>
+      <div class="card">
+        <div style="font-size:14px;font-weight:600;margin-bottom:16px">Current Configuration</div>
+        <div class="stat-row"><span class="stat-label">Solar Capacity</span><span class="stat-val" id="cfg-solar">5 kW</span></div>
+        <div class="stat-row"><span class="stat-label">Battery Level</span><span class="stat-val" id="cfg-battery">75%</span></div>
+        <div class="stat-row"><span class="stat-label">Tariff Rate</span><span class="stat-val" id="cfg-tariff">₹8/kWh</span></div>
+        <div class="stat-row"><span class="stat-label">Monthly Solar Est.</span><span class="stat-val" id="cfg-solar-est">750 kWh</span></div>
+        <div class="stat-row"><span class="stat-label">Location</span><span class="stat-val">Palo Alto, CA</span></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ─── STATE ───────────────────────────────────────────
+let devices = [];
+let solarKW = 5, batteryPct = 75, tariff = 8;
+let analChart1, analChart2, analChart3;
+const PIE_COLORS = ['#4f8aff','#22c55e','#f59e0b','#ef4444','#a855f7','#06b6d4','#f97316','#84cc16'];
+
+// ─── NAVIGATION ──────────────────────────────────────
+function showPage(p, btn) {
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.getElementById('page-' + p).classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (p === 'analytics') renderAnalytics();
+  if (p === 'report') renderReport();
+  if (p === 'settings') updateSettingsDisplay();
+  if (p === 'solar') updateSolarPage();
+}
+
+// ─── LIVE CLOCK ──────────────────────────────────────
+function liveTime() {
+  const now = new Date();
+  document.getElementById('live-clock').textContent =
+    now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+setInterval(liveTime, 1000); liveTime();
+
+// ─── SOLAR BARS ──────────────────────────────────────
+const hourlyActual   = [0,0,0.4,1.8,3.5,5.8,7.4,6.2,4.1,2.3,0.8,0,0,0,0,0,0,0,0,0,0,0,0,0];
+const hourlyForecast = [0,0,0.6,2.0,3.8,6.0,7.8,6.5,4.5,2.6,1.0,0.2,0,0,0,0,0,0,0,0,0,0,0,0];
+const chartIdxs = [6,8,10,12,14,16,18,20];
+
+function renderSolarBars() {
+  const wrap = document.getElementById('solar-bars');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  const maxVal = 8;
+  chartIdxs.forEach(idx => {
+    const a = hourlyActual[idx] || 0;
+    const f = hourlyForecast[idx] || 0;
+    const aPct = (a / maxVal * 100).toFixed(1);
+    const fPct = (f / maxVal * 100).toFixed(1);
+    const g = document.createElement('div');
+    g.className = 'bar-group';
+    g.innerHTML = `
+      <div style="flex:1;height:${aPct}%;background:var(--accent);border-radius:3px 3px 0 0;min-height:3px;position:relative;cursor:pointer">
+        <div class="btt">${a} kW</div>
+      </div>
+      <div style="flex:1;height:${fPct}%;background:rgba(79,138,255,0.25);border-radius:3px 3px 0 0;min-height:2px"></div>
+    `;
+    const bar = g.querySelector('div[style*="accent"]');
+    bar.addEventListener('mouseenter', function(){this.querySelector('.btt').style.display='block'});
+    bar.addEventListener('mouseleave', function(){this.querySelector('.btt').style.display='none'});
+    wrap.appendChild(g);
+  });
+}
+
+// ─── FORECAST ────────────────────────────────────────
+function renderForecast() {
+  const data = [
+    {day:'Mon',icon:'☀️',kwh:22.4,pct:95,col:'var(--amber)'},
+    {day:'Tue',icon:'☀️',kwh:21.8,pct:90,col:'var(--amber)'},
+    {day:'Wed',icon:'🌤',kwh:14.2,pct:55,col:'var(--accent)'},
+    {day:'Thu',icon:'☁️',kwh:8.5, pct:30,col:'var(--accent)'},
+    {day:'Fri',icon:'☀️',kwh:24.1,pct:100,col:'var(--amber)'},
+  ];
+  document.getElementById('forecast-grid').innerHTML = data.map(d => `
+    <div class="forecast-card">
+      <div class="forecast-day">${d.day}</div>
+      <div class="forecast-icon">${d.icon}</div>
+      <div class="forecast-kwh">${d.kwh}</div>
+      <div class="forecast-lbl">kWh Est.</div>
+      <div class="progress-bar" style="margin-top:8px">
+        <div class="progress-fill" style="width:${d.pct}%;background:${d.col}"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ─── GRID MINI BARS ───────────────────────────────────
+function renderGridMiniBars() {
+  const vals = [70,85,80,90,88,92,91];
+  document.getElementById('grid-mini-bars').innerHTML =
+    vals.map((v,i) => `<div style="flex:1;height:${v}%;background:${i===6?'var(--accent)':'rgba(79,138,255,0.25)'};border-radius:2px 2px 0 0"></div>`).join('');
+}
+
+// ─── ADD DEVICE ──────────────────────────────────────
+function addDevice() {
+  const name  = document.getElementById('dev-name').value.trim();
+  const watt  = parseFloat(document.getElementById('dev-watt').value);
+  const hours = parseFloat(document.getElementById('dev-hours').value);
+  const room  = document.getElementById('dev-room').value;
+  if (!name || !watt || !hours) { alert('Please fill in all device fields.'); return; }
+  devices.push({id: Date.now(), name, watt, hours, room});
+  document.getElementById('dev-name').value = '';
+  document.getElementById('dev-watt').value = '';
+  document.getElementById('dev-hours').value = '';
+  renderDeviceList();
+  updateDashboard();
+  if (document.getElementById('page-analytics').classList.contains('active')) renderAnalytics();
+}
+
+function removeDevice(id) {
+  devices = devices.filter(d => d.id !== id);
+  renderDeviceList();
+  updateDashboard();
+  if (document.getElementById('page-analytics').classList.contains('active')) renderAnalytics();
+}
+
+// kWh/month per device
+function monthlyKwh(d) { return +(d.watt * d.hours * 30 / 1000).toFixed(2); }
+
+function renderDeviceList() {
+  const list = document.getElementById('device-list');
+  const solarMo = solarKW * 5 * 30;
+  const totalMo = devices.reduce((s,d) => s + monthlyKwh(d), 0);
+  const gridUsage = Math.max(0, totalMo - solarMo);
+  const bill = +(gridUsage * tariff).toFixed(2);
+  const savings = +(Math.min(totalMo, solarMo) * tariff).toFixed(2);
+
+  document.getElementById('dev-count').textContent = devices.length;
+  document.getElementById('dev-total-kwh').textContent = totalMo.toFixed(1) + ' kWh';
+  document.getElementById('dev-bill').textContent = '₹' + bill.toLocaleString('en-IN');
+  document.getElementById('dev-savings').textContent = '₹' + savings.toLocaleString('en-IN');
+
+  if (!devices.length) {
+    list.innerHTML = '<div style="font-size:13px;color:var(--text3);padding:24px;text-align:center">No devices yet — add your first above.</div>';
+    document.getElementById('top-device-chip').innerHTML = '';
+    return;
+  }
+  const top = devices.reduce((a,b) => monthlyKwh(a) > monthlyKwh(b) ? a : b);
+  document.getElementById('top-device-chip').innerHTML =
+    `<div class="top-chip">⚡ Top: ${top.name} (${monthlyKwh(top)} kWh/mo)</div>`;
+
+  list.innerHTML = devices.map(d => `
+    <div class="device-item">
+      <div>
+        <div class="device-name">${d.name} <span class="badge badge-blue" style="font-size:10px">${d.room}</span></div>
+        <div class="device-meta">${d.watt}W × ${d.hours}h/day</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="device-kwh">${monthlyKwh(d)} kWh — ₹${(monthlyKwh(d)*tariff).toFixed(0)}</div>
+        <button class="btn-del" onclick="removeDevice(${d.id})">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ─── UPDATE DASHBOARD ────────────────────────────────
+function updateDashboard() {
+  if (!devices.length) return;
+  
+  // Monthly calculations
+  const totalMo = devices.reduce((s,d) => s + monthlyKwh(d), 0);
+  const solarMo = solarKW * 5 * 30;
+  const savings = +(Math.min(totalMo, solarMo) * tariff).toFixed(2);
+  document.getElementById('d-weekly').textContent = (totalMo / 4).toFixed(1) + ' kWh';
+  document.getElementById('d-savings').textContent = '₹' + savings.toLocaleString('en-IN');
+  
+  // Weekly solar generation calculations
+  const weeklyConsumption = (totalMo / 4);
+  const weeklySolarGeneration = solarKW * 5 * 7;
+  const solarUsed = Math.min(weeklyConsumption, weeklySolarGeneration);
+  const gridUsed = Math.max(0, weeklyConsumption - solarUsed);
+  
+  // Solar percentages
+  const solarPct = weeklyConsumption > 0 ? (solarUsed / weeklyConsumption * 100) : 0;
+  const gridPct = weeklyConsumption > 0 ? (gridUsed / weeklyConsumption * 100) : 0;
+  
+  // Update solar generation cards
+  document.getElementById('d-solar-weekly').textContent = weeklySolarGeneration.toFixed(1) + ' kWh';
+  document.getElementById('d-solar-daily').textContent = (weeklySolarGeneration / 7).toFixed(1) + ' kWh';
+  document.getElementById('d-solar-capacity').textContent = solarKW + ' kW';
+  
+  document.getElementById('d-solar-pct').textContent = solarPct.toFixed(0) + '%';
+  document.getElementById('d-grid-pct').textContent = gridPct.toFixed(0) + '%';
+  
+  document.getElementById('d-solar-bar').style.width = solarPct.toFixed(0) + '%';
+  document.getElementById('d-grid-bar').style.width = gridPct.toFixed(0) + '%';
+  
+  document.getElementById('d-solar-kwh').textContent = solarUsed.toFixed(1) + ' kWh';
+  document.getElementById('d-grid-kwh').textContent = gridUsed.toFixed(1) + ' kWh';
+}
+
+// ─── BATTERY DISPLAY ─────────────────────────────────
+function updateBatteryDisplay(pct) {
+  const circumference = 339;
+  const offset = circumference * (1 - pct / 100);
+  document.getElementById('batt-ring').setAttribute('stroke-dashoffset', offset.toFixed(1));
+  document.getElementById('batt-pct-text').textContent = pct + '%';
+  const hrs = Math.floor(pct * 0.18);
+  const mins = Math.round((pct * 0.18 - hrs) * 60);
+  const timeStr = hrs + 'h ' + mins + 'm';
+  document.getElementById('batt-time-stat').textContent = timeStr;
+  document.getElementById('d-batt').textContent = pct + '%';
+  document.getElementById('d-batt-time').textContent = '~' + timeStr + ' remaining';
+  document.getElementById('batt-bar').style.width = pct + '%';
+  document.getElementById('sb-batt').textContent = pct + '%';
+}
+
+// ─── SYSTEM SETTINGS ─────────────────────────────────
+function updateSystem() {
+  solarKW    = parseFloat(document.getElementById('sys-solar').value) || 5;
+  batteryPct = parseFloat(document.getElementById('sys-battery').value) || 75;
+  tariff     = parseFloat(document.getElementById('sys-tariff').value) || 8;
+  updateBatteryDisplay(batteryPct);
+  updateDashboard();
+  updateSolarPage();
+  renderDeviceList();
+  updateSettingsDisplay();
+  const msg = document.getElementById('sys-update-msg');
+  msg.textContent = '✓ Settings saved';
+  setTimeout(() => msg.textContent = '', 2500);
+}
+
+function updateSettingsDisplay() {
+  document.getElementById('cfg-solar').textContent = solarKW + ' kW';
+  document.getElementById('cfg-battery').textContent = batteryPct + '%';
+  document.getElementById('cfg-tariff').textContent = '₹' + tariff + '/kWh';
+  document.getElementById('cfg-solar-est').textContent = (solarKW * 5 * 30).toFixed(0) + ' kWh';
+}
+
+// ─── THEME TOGGLE ────────────────────────────────────
+function toggleTheme() {
+  document.body.classList.toggle('light-mode');
+  const isDark = !document.body.classList.contains('light-mode');
+  const icon = document.getElementById('theme-icon');
+  const text = document.querySelector('#theme-toggle span:last-child');
+  icon.textContent = isDark ? '🌙' : '☀️';
+  text.textContent = isDark ? ' Dark' : ' Light';
+  localStorage.setItem('theme', isDark ? 'dark' : 'light');
+}
+
+// Load saved theme on page load
+window.addEventListener('DOMContentLoaded', () => {
+  const savedTheme = localStorage.getItem('theme') || 'dark';
+  if (savedTheme === 'light') {
+    document.body.classList.add('light-mode');
+    document.getElementById('theme-icon').textContent = '☀️';
+    document.querySelector('#theme-toggle span:last-child').textContent = ' Light';
+  }
+});
+
+// ─── SOLAR PAGE UPDATE ───────────────────────────────
+function updateSolarPage() {
+  if (!devices.length) return;
+  
+  const totalMo = devices.reduce((s,d) => s + monthlyKwh(d), 0);
+  const weeklyConsumption = totalMo / 4;
+  
+  const weeklySolarGen = solarKW * 5 * 7;
+  const monthlySolarGen = solarKW * 5 * 30;
+  const peakGen = weeklySolarGen * 0.65;
+  const offPeakGen = weeklySolarGen * 0.35;
+  
+  const solarUsed = Math.min(weeklyConsumption, weeklySolarGen);
+  const efficiency = weeklyConsumption > 0 ? (weeklySolarGen / weeklyConsumption * 100) : 0;
+  
+  document.getElementById('sol-weekly').textContent = weeklySolarGen.toFixed(1) + ' kWh';
+  document.getElementById('sol-monthly').textContent = monthlySolarGen.toFixed(1) + ' kWh';
+  document.getElementById('sol-capacity').textContent = solarKW + ' kW';
+  document.getElementById('sol-efficiency').textContent = Math.min(100, efficiency).toFixed(0) + '%';
+  document.getElementById('sol-peak-gen').textContent = peakGen.toFixed(1) + ' kWh';
+  document.getElementById('sol-offpeak-gen').textContent = offPeakGen.toFixed(1) + ' kWh';
+  
+  const genPct = weeklySolarGen > 0 ? (weeklySolarGen / (weeklySolarGen + weeklyConsumption) * 100) : 50;
+  const conPct = 100 - genPct;
+  
+  document.getElementById('sol-gen-bar').style.width = genPct.toFixed(0) + '%';
+  document.getElementById('sol-cons-bar').style.width = conPct.toFixed(0) + '%';
+  
+  document.getElementById('sol-gen-kwh').textContent = weeklySolarGen.toFixed(1) + ' kWh';
+  document.getElementById('sol-cons-kwh').textContent = weeklyConsumption.toFixed(1) + ' kWh';
+}
+
+// ─── ANALYTICS ───────────────────────────────────────
+function switchAnalyticsTab(tab, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAnalytics(tab);
+}
+
+function renderAnalytics(tab = 'weekly') {
+  const isWeekly = tab === 'weekly';
+  const labels   = isWeekly ? ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] : ['Nov','Dec','Jan','Feb','Mar','Apr'];
+  const genData  = isWeekly ? [22.5,28.3,18.7,12.4,30.2,26.1,24.5]     : [120,135,158,180,195,210];
+  const consData = isWeekly ? [18.3,21.5,19.4,22.1,16.8,14.2,17.6]      : [145,130,142,120,110,118];
+
+  if (analChart1) analChart1.destroy();
+  analChart1 = new Chart(document.getElementById('analChart1'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {label:'Generated',data:genData, backgroundColor:'#4f8aff', borderRadius:4},
+        {label:'Consumed', data:consData,backgroundColor:'#ef4444', borderRadius:4}
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#8b90a0',font:{size:11}}},
+        y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#8b90a0',font:{size:11}}}
+      }
+    }
+  });
+
+  let devData;
+  if (devices.length) {
+    if (isWeekly) {
+      const weeklyFactor = [0.95, 1.1, 0.9, 1.15, 0.85, 1.3, 1.25];
+      const avgWeeklyFactor = weeklyFactor.reduce((a,b)=>a+b)/7;
+      devData = {
+        labels: devices.map(d=>d.name),
+        data: devices.map(d=>{
+          const monthlyUsage = monthlyKwh(d);
+          const weeklyBase = monthlyUsage / 4;
+          return monthlyUsage > 100 ? weeklyBase * 1.1 : monthlyUsage > 50 ? weeklyBase * 0.95 : weeklyBase * 1.2;
+        })
+      };
+    } else {
+      devData = {labels: devices.map(d=>d.name), data: devices.map(d=>monthlyKwh(d))};
+    }
+    
+    const topIdx = devData.data.indexOf(Math.max(...devData.data));
+    const hoverOffsets = new Array(devData.data.length).fill(0).map((_, i) => i === topIdx ? 15 : 0);
+
+    if (analChart2) analChart2.destroy();
+    analChart2 = new Chart(document.getElementById('analChart2'), {
+      type: 'doughnut',
+      data: {
+        labels: devData.labels,
+        datasets:[{
+          data: devData.data,
+          backgroundColor: PIE_COLORS.slice(0,devData.data.length),
+          borderWidth:0,
+          hoverOffset:20,
+          offset: hoverOffsets
+        }]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{
+          legend:{display:false},
+          tooltip:{callbacks:{
+            label:(ctx)=>ctx.label + ': ' + ctx.parsed.y.toFixed(1) + ' kWh' + (ctx.dataIndex === topIdx ? ' ⭐ PEAK' : '')
+          }}
+        },
+        cutout:'60%'
+      }
+    });
+    const total = devData.data.reduce((a,b)=>a+b,0);
+    const topDevice = devData.labels[topIdx];
+    const topUsage = devData.data[topIdx];
+    const timePeriod = isWeekly ? '/week' : '/month';
+    document.getElementById('pie-legend').innerHTML = '<div style="width:100%;font-weight:600;color:#4f8aff;margin-bottom:8px;padding:8px;background:rgba(79,138,255,0.1);border-radius:6px;">⭐ Peak Usage: ' + topDevice + ' (' + topUsage.toFixed(1) + ' kWh' + timePeriod + ')</div>' + devData.labels.map((l,i) =>
+      `<span class="pie-leg-item" style="${i === topIdx ? 'font-weight:600;color:#4f8aff;' : ''}"><span class="pie-swatch" style="background:${PIE_COLORS[i]}"></span>${l} (${((devData.data[i]/total)*100).toFixed(0)}%)</span>`
+    ).join('');
+  } else {
+    if (analChart2) analChart2.destroy();
+    analChart2 = new Chart(document.getElementById('analChart2'), {
+      type: 'doughnut',
+      data: {
+        labels: ['No Data'],
+        datasets:[{
+          data: [100],
+          backgroundColor: ['#555a6e'],
+          borderWidth:0
+        }]
+      },
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        plugins:{
+          legend:{display:false},
+          tooltip:{enabled:false}
+        },
+        cutout:'60%'
+      }
+    });
+    document.getElementById('pie-legend').innerHTML = '<div style="width:100%;text-align:center;color:#8b90a0;padding:16px;font-size:12px;">Add devices to see consumption breakdown</div>';
+  }
+
+
+  if (analChart3) analChart3.destroy();
+  const savingsData = [1200, 1450, 1680, 1920, 2100, 2065];
+  const billData = [800, 950, 720, 580, 420, 0];
+  analChart3 = new Chart(document.getElementById('analChart3'), {
+    type: 'line',
+    data: {
+      labels: ['Nov','Dec','Jan','Feb','Mar','Apr'],
+      datasets:[{
+        label:'Savings (₹)',
+        data:[1500,1625,1750,1900,2000,2065],
+        borderColor:'#22c55e', backgroundColor:'rgba(34,197,94,0.08)',
+        tension:0.4, fill:true, pointRadius:4, pointBackgroundColor:'#22c55e'
+      }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:true, labels:{color:'#8b90a0', font:{size:11}}},
+        tooltip:{callbacks:{
+          label:(ctx)=>(ctx.dataset.label + ': ₹' + ctx.parsed.y.toFixed(0))
+        }}
+      },
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#8b90a0',font:{size:11}}},
+        y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#8b90a0',font:{size:11},callback:v=>'₹'+v}}
+      }
+    }
+  });
+}
+
+// ─── REPORT ──────────────────────────────────────────
+function renderReport() {
+  const solarMo = solarKW * 5 * 30;
+  document.getElementById('rep-solar').textContent = solarMo.toFixed(1) + ' kWh';
+  document.getElementById('rep-solar-note').textContent = `${solarKW}kW × 5hr/day × 30 days`;
+
+  if (!devices.length) {
+    ['rep-consumption','rep-bill','rep-savings','rep-top-device'].forEach(id => {
+      document.getElementById(id).textContent = '—';
+    });
+    document.getElementById('rep-breakdown').innerHTML = '<div style="font-size:13px;color:var(--text3)">No devices added.</div>';
+    document.getElementById('rep-insights').innerHTML = '<div style="font-size:13px;color:var(--text3)">Add devices and configure your system to see recommendations.</div>';
+    return;
+  }
+  const totalMo   = devices.reduce((s,d) => s + monthlyKwh(d), 0);
+  const gridUsage = Math.max(0, totalMo - solarMo);
+  const savings   = +(Math.min(totalMo, solarMo) * tariff).toFixed(2);
+  const bill      = +(gridUsage * tariff).toFixed(2);
+
+  document.getElementById('rep-consumption').textContent = totalMo.toFixed(1) + ' kWh';
+  document.getElementById('rep-consumption-note').textContent = 'Monthly across all devices';
+  document.getElementById('rep-bill').textContent = '₹' + bill.toLocaleString('en-IN');
+  document.getElementById('rep-savings').textContent = '₹' + savings.toLocaleString('en-IN');
+
+  const top = devices.reduce((a,b) => monthlyKwh(a) > monthlyKwh(b) ? a : b);
+  document.getElementById('rep-top-device').textContent =
+    `${top.name} — ${monthlyKwh(top)} kWh/mo (${top.watt}W × ${top.hours}h/day)`;
+
+  document.getElementById('rep-breakdown').innerHTML =
+    [...devices].sort((a,b) => monthlyKwh(b)-monthlyKwh(a)).map(d =>
+      `<div class="stat-row">
+        <span class="stat-label">${d.name} <span style="font-size:11px;color:var(--text3)">(${d.room})</span></span>
+        <span class="stat-val">${monthlyKwh(d)} kWh — ₹${(monthlyKwh(d)*tariff).toFixed(0)}</span>
+      </div>`
+    ).join('');
+
+  const solarCoverage = Math.min(100, (solarMo / totalMo * 100)).toFixed(0);
+  const insights = [];
+  if (+solarCoverage >= 90)
+    insights.push(`✅ Your solar system covers ${solarCoverage}% of total consumption — excellent grid independence.`);
+  else if (+solarCoverage >= 60)
+    insights.push(`Your solar covers ${solarCoverage}% of needs. A 1–2 kW panel addition could reach full independence.`);
+  else
+    insights.push(`Solar covers only ${solarCoverage}% of needs. Consider expanding capacity or reducing daytime usage.`);
+  if (top.watt > 1000)
+    insights.push(`⚡ ${top.name} is your top consumer at ${top.watt}W. Scheduling it during peak solar hours (10 AM–2 PM) reduces grid draw.`);
+  if (bill < 50)
+    insights.push(`💰 Your estimated bill is just ₹${bill.toFixed(0)} — your solar investment is paying off effectively.`);
+  else
+    insights.push(`💡 Shifting high-load devices to solar hours could reduce your ₹${bill.toLocaleString('en-IN')} monthly grid bill further.`);
+
+  document.getElementById('rep-insights').innerHTML =
+    insights.map(i => `<div class="insight-item">${i}</div>`).join('');
+}
+
+// ─── INIT ─────────────────────────────────────────────
+renderSolarBars();
+renderForecast();
+renderGridMiniBars();
+</script>
+</body>
+</html>

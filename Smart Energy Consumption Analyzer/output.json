@@ -1,0 +1,41 @@
+{
+  "location": "India",
+  "currency": "INR",
+  "tariff_inr_per_kwh": 8.00,
+  "solar_capacity_kw": 5.00,
+  "battery_percent": 75.00,
+  "battery_hours_remaining": 13.50,
+  "total_consumption_kwh": 663.00,
+  "solar_generation_kwh": 750.00,
+  "grid_usage_kwh": 0.00,
+  "solar_coverage_pct": 100.00,
+  "monthly_bill_inr": 0.00,
+  "monthly_savings_inr": 5304.00,
+  "top_device": "AC",
+  "devices": [
+    {
+      "name": "AC",
+      "room": "Living_Room",
+      "watt": 2000.00,
+      "hours_per_day": 6.00,
+      "monthly_kwh": 360.00,
+      "monthly_cost_inr": 2880.00
+    },
+    {
+      "name": "Refrigerator",
+      "room": "Kitchen",
+      "watt": 400.00,
+      "hours_per_day": 24.00,
+      "monthly_kwh": 288.00,
+      "monthly_cost_inr": 2304.00
+    },
+    {
+      "name": "LED_Lights",
+      "room": "Bedroom",
+      "watt": 100.00,
+      "hours_per_day": 5.00,
+      "monthly_kwh": 15.00,
+      "monthly_cost_inr": 120.00
+    }
+  ]
+}

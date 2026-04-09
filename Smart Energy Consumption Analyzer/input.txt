@@ -1,0 +1,17 @@
+5
+75
+8
+India
+3
+AC
+Living_Room
+2000
+6
+Refrigerator
+Kitchen
+400
+24
+LED_Lights
+Bedroom
+100
+5

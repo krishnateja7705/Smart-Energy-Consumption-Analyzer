@@ -1,0 +1,13 @@
+10
+85
+7
+Mumbai
+2
+Washing_Machine
+Laundry
+2500
+2
+Fan
+Bedroom
+80
+8
